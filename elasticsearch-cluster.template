@@ -73,9 +73,9 @@
       "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties" : {
       "AvailabilityZones" : { "Fn::GetAZs" : "" },
-        "Listeners" : [ { "LoadBalancerPort" : "9200", "InstancePort" : "9200", "Protocol" : "HTTP" } ],
+        "Listeners" : [ { "LoadBalancerPort" : "9100", "InstancePort" : "9100", "Protocol" : "HTTP" } ],
         "HealthCheck" : {
-          "Target" : "HTTP:9200/",
+          "Target" : "HTTP:9100/",
           "HealthyThreshold" : "3",
           "UnhealthyThreshold" : "5",
           "Interval" : "90",
@@ -145,7 +145,7 @@
         "AWS::CloudFormation::Init" : {
           "config" : {
             "files" : {
-              "/usr/local/elasticsearch/elasticsearch-1.0.0/config/elasticsearch.yml" : {
+              "/usr/local/elasticsearch/elasticsearch-5.3.0/config/elasticsearch.yml" : {
                 "content" : { "Fn::Join" : ["", [
                   "cloud.aws.region:\n",
                   " ", { "Ref" : "AWS::Region" }, "\n",
@@ -185,11 +185,14 @@
           "#    --region ", { "Ref" : "AWS::Region" }, "\n",
           
           "#get and unpack elasticsearch\n",
-          "wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.0.0.zip || error_exit \"Failed to retrieve elasticsearch archive\"\n",
-		  "unzip elasticsearch-1.0.0.zip -d /usr/local/elasticsearch\n",          
-          
+          "#wget https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-1.0.0.zip || error_exit \"Failed to retrieve elasticsearch archive\"\n",
+		  "wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.3.0.zip || error_exit \"Failed to retrieve elasticsearch archive\"\n",
+		  "#unzip elasticsearch-1.0.0.zip -d /usr/local/elasticsearch\n",          
+          "unzip elasticsearch-5.3.0.zip -d /usr/local/elasticsearch\n",
+		  
           "#install aws plugin\n",
-          "cd /usr/local/elasticsearch/elasticsearch-1.0.0\n",
+          "#cd /usr/local/elasticsearch/elasticsearch-1.0.0\n",
+		  "cd /usr/local/elasticsearch/elasticsearch-5.3.0\n",
           "res=$(bin/plugin -install elasticsearch/elasticsearch-cloud-aws/2.0.0.RC1)\n",
           "if [ \"$?\" -ne \"0\" ]; then\n",
           "   error_exit \"Failed to install aws plugin: ${res}\"\n",
@@ -203,9 +206,10 @@
           "cd ~\n",
           "wget https://github.com/elasticsearch/elasticsearch-servicewrapper/zipball/master\n",
           "unzip master\n",
-          "#mv elasticsearch-elasticsearch-servicewrapper-4943d5a/service/ /usr/local/elasticsearch/elasticsearch-1.0.0/bin/\n",   
-		  "mv elastic-elasticsearch-servicewrapper-a27c257/service/ /usr/local/elasticsearch/elasticsearch-1.0.0/bin/\n",   
-          "cd /usr/local/elasticsearch/elasticsearch-1.0.0\n",
+		  "#mv elastic-elasticsearch-servicewrapper-a27c257/service/ /usr/local/elasticsearch/elasticsearch-1.0.0/bin/\n",  
+		  "mv elastic-elasticsearch-servicewrapper-a27c257/service/ /usr/local/elasticsearch/elasticsearch-5.3.0/bin/\n",
+          "#cd /usr/local/elasticsearch/elasticsearch-1.0.0\n",
+		  "cd /usr/local/elasticsearch/elasticsearch-5.3.0\n",
           "sed -i 's#set.default.ES_HOME=.*#set.default.ES_HOME='$PWD'#g' bin/service/elasticsearch.conf\n",
           "#changing default heap size for smaller instances\n",
           "sed -i 's#set.default.ES_HEAP_SIZE=.*#set.default.ES_HEAP_SIZE=512#g' bin/service/elasticsearch.conf\n",
@@ -239,8 +243,7 @@
       "Properties" : {
         "GroupDescription" : "Enable ElasticSearch access",
         "SecurityGroupIngress" : [
-          {"IpProtocol" : "tcp", "FromPort" : "9200", "ToPort" : "9200", "CidrIp" : "0.0.0.0/0"},
-          {"IpProtocol" : "tcp", "FromPort" : "9300", "ToPort" : "9300", "CidrIp" : "0.0.0.0/0"},
+          {"IpProtocol" : "tcp", "FromPort" : "9100", "ToPort" : "9100", "CidrIp" : "0.0.0.0/0"},
           {"IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : { "Ref" : "SSHLocation"}}
         ]
       }      
